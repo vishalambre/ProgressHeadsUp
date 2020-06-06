@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--    layout dimens-->
+    <dimen name="screen_content_padding">8dp</dimen>
+    <dimen name="item_height">40dp</dimen>
+    <dimen name="padding_grid_1">8dp</dimen>
+
+    <!--    text dimens-->
+    <dimen name="text_heading">20sp</dimen>
+</resources>

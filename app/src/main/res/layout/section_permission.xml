@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <TextView
+        style="@style/HeaderTextStyle"
+        android:text="Permissions" />
+
+    <LinearLayout
+        android:id="@+id/ll_permission_notification"
+        style="@style/ItemBackgroundStyle">
+
+        <TextView
+            style="@style/ItemTextStyle"
+            android:text="Grant Notification Permission" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/ll_permission_overlay"
+        style="@style/ItemBackgroundStyle">
+
+        <TextView
+            style="@style/ItemTextStyle"
+            android:text="Grant Overlay Permission" />
+    </LinearLayout>
+</LinearLayout>

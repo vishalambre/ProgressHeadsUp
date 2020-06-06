@@ -1,0 +1,38 @@
+<resources>
+
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:textColor">@color/colorWhite</item>
+        <item name="fontFamily">monospace</item>
+    </style>
+
+    <style name="HeaderTextStyle">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:paddingVertical">@dimen/padding_grid_1</item>
+        <item name="android:paddingTop">@dimen/padding_grid_1</item>
+        <item name="android:paddingBottom">@dimen/padding_grid_1</item>
+        <item name="android:textSize">@dimen/text_heading</item>
+    </style>
+
+    <style name="ItemBackgroundStyle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/item_height</item>
+        <item name="android:foreground">?attr/selectableItemBackground</item>
+        <item name="android:clickable">true</item>
+        <item name="android:background">@color/colorAccent</item>
+        <item name="android:layout_marginBottom">@dimen/padding_grid_1</item>
+        <item name="android:paddingLeft">@dimen/padding_grid_1</item>
+    </style>
+
+    <style name="ItemTextStyle">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:gravity">center</item>
+        <item name="android:layout_gravity">center</item>
+        <item name="background">@color/colorAccent</item>
+    </style>
+
+</resources>

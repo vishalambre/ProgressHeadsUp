@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/ll_trigger_test_notification"
+    style="@style/ItemBackgroundStyle"
+    android:layout_alignParentBottom="true"
+    android:gravity="center">
+
+    <TextView
+        style="@style/ItemTextStyle"
+        android:text="Trigger Test Notification" />
+</LinearLayout>
