@@ -74,11 +74,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val triggerTestNotification = { _: View ->
-        createNotificationChannel()
-        showNotification(currentProgress)
-        handler.postDelayed(runnable, PROGRESS_BAR_UPDATE_DELAY_SECONDS)
+        when (areAllPermissionsGranted()) {
+            true -> {
+                createNotificationChannel()
+                showNotification(currentProgress)
+                handler.postDelayed(runnable, PROGRESS_BAR_UPDATE_DELAY_SECONDS)
+            }
+            false -> showToast("Some permission is missing!")
+        }
         Unit
     }
+
+    private fun areAllPermissionsGranted() =
+        NotificationManagerCompat.getEnabledListenerPackages(this)
+            .contains(packageName) && Settings.canDrawOverlays(this)
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
