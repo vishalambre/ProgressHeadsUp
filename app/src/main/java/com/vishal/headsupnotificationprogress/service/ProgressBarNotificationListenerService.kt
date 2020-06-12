@@ -1,6 +1,5 @@
 package com.vishal.headsupnotificationprogress.service
 
-import android.app.Notification
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -31,32 +30,19 @@ class ProgressBarNotificationListenerService : NotificationListenerService() {
 
     }
 
-    //Todo: refactor this method
-    override fun onNotificationPosted(sbn: StatusBarNotification?) {
+    override fun onNotificationPosted(sbn: StatusBarNotification) {
         if (Settings.canDrawOverlays(this) && progressBarOverlayService == null) {
             val intent = Intent(this, ProgressBarOverlayService::class.java)
             bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
-        } else {
-            val progressPair = sbn?.notification?.run { getProgressStatus(this) }
-            if (progressPair?.second != null && progressPair.second != 0)
-                progressBarOverlayService?.onNotificationPosted(progressPair, sbn.id, sbn.packageName)
-            else
-                removeNotification(sbn)
         }
+        progressBarOverlayService?.onNotificationPosted(sbn)
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {
-        removeNotification(sbn)
+        removeProgressbarOverlay(sbn)
     }
 
-    private fun getProgressStatus(notification: Notification): Pair<Int, Int> {
-        val maxProgress: Int? = notification.extras?.get(Notification.EXTRA_PROGRESS_MAX) as Int?
-        val currentProgress: Int? = notification.extras?.get(Notification.EXTRA_PROGRESS) as Int?
-        return Pair(currentProgress ?: 0, maxProgress ?: 0)
+    private fun removeProgressbarOverlay(sbn: StatusBarNotification?) {
+        progressBarOverlayService?.removeProgressBarOverlay(sbn?.id ?: -1)
     }
-
-    private fun removeNotification(sbn: StatusBarNotification?) {
-        progressBarOverlayService?.onNotificationRemoved(sbn?.id ?: -1)
-    }
-
 }

@@ -6,7 +6,7 @@
 
     <TextView
         style="@style/HeaderTextStyle"
-        android:text="Permissions" />
+        android:text="@string/permissions" />
 
     <LinearLayout
         android:id="@+id/ll_permission_notification"
@@ -14,7 +14,7 @@
 
         <TextView
             style="@style/ItemTextStyle"
-            android:text="Grant Notification Permission" />
+            android:text="@string/grant_notification_permission" />
     </LinearLayout>
 
     <LinearLayout
@@ -23,6 +23,6 @@
 
         <TextView
             style="@style/ItemTextStyle"
-            android:text="Grant Overlay Permission" />
+            android:text="@string/grant_overlay_permission" />
     </LinearLayout>
 </LinearLayout>

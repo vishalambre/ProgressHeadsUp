@@ -1,6 +1,7 @@
 package com.vishal.headsupnotificationprogress.service
 
 import android.animation.ValueAnimator
+import android.app.Notification
 import android.app.Service
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -9,7 +10,7 @@ import android.graphics.PixelFormat
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
-import android.util.Log
+import android.service.notification.StatusBarNotification
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
@@ -22,7 +23,6 @@ import com.vishal.headsupnotificationprogress.utils.getScreenWidth
 import java.lang.ref.WeakReference
 
 class ProgressBarOverlayService : Service() {
-
     companion object {
         const val PROGRESS_BAR_HEIGHT = 2
     }
@@ -45,10 +45,33 @@ class ProgressBarOverlayService : Service() {
         removeRootView()
     }
 
-    private fun addProgressBarView(@ColorInt progressBarColor: Int = getColor(R.color.colorWhite)): View {
-        val view = getViewAsProgressBar(progressBarColor)
-        rootLinearLayout.addView(view)
-        return view
+    fun onNotificationPosted(sbn: StatusBarNotification) {
+        if (isProgressBarNotification(sbn)) {
+            onProgressBarNotificationPosted(sbn)
+        }
+    }
+
+    private fun onProgressBarNotificationPosted(sbn: StatusBarNotification) =
+        with(sbn.notification?.run { getProgressStatus(this) }) {
+            this?.also {
+                if (it.second == 0) removeProgressBarOverlay(sbn.id)
+                else addProgressBar(it, sbn.id, sbn.packageName)
+            }
+        }
+
+    private fun addProgressBar(
+        progressPair: Pair<Int, Int>,
+        notificationId: Int,
+        packageName: String
+    ) {
+        if (progressBarMap[notificationId]?.get() == null) {
+            progressBarMap[notificationId] = WeakReference(addProgressBarView())
+        }
+        animateViewWidth(
+            progressBarMap[notificationId]?.get()!!,
+            progressPair.first,
+            progressPair.second
+        )
     }
 
     private fun addRootView(): LinearLayout {
@@ -65,8 +88,48 @@ class ProgressBarOverlayService : Service() {
         windowManager?.removeView(rootLinearLayout)
     }
 
+    private fun addProgressBarView(@ColorInt progressBarColor: Int = getColor(R.color.colorWhite)): View {
+        val view = getViewAsProgressBar(progressBarColor)
+        rootLinearLayout.addView(view)
+        return view
+    }
+
     private fun removeProgressBarView(view: View?) {
         rootLinearLayout.removeView(view)
+    }
+
+    private fun getViewAsProgressBar(@ColorInt color: Int): View {
+        val progressView = View(this)
+        val layoutParams = LinearLayout.LayoutParams(
+            0,
+            PROGRESS_BAR_HEIGHT
+        )
+        progressView.setBackgroundColor(color)
+        progressView.layoutParams = layoutParams
+        return progressView
+    }
+
+    //Todo: Refactor
+    private fun animateViewWidth(view: View, currProgress: Int, maxProgress: Int) {
+        ValueAnimator.ofInt(view.width, getInterpolatedViewWidth(currProgress, maxProgress)).apply {
+            duration = 1000
+            interpolator = AccelerateDecelerateInterpolator()
+            start()
+        }.addUpdateListener {
+            val layoutParams = view.layoutParams
+            layoutParams.width = it.animatedValue as Int
+            view.layoutParams = layoutParams
+        }
+    }
+
+    private fun getInterpolatedViewWidth(currProgress: Int, maxProgress: Int) =
+        (currProgress * getScreenWidth()) / maxProgress
+
+    fun removeProgressBarOverlay(notificationId: Int) {
+        if (progressBarMap[notificationId]?.get() != null) {
+            removeProgressBarView(progressBarMap[notificationId]?.get())
+            progressBarMap.remove(notificationId)
+        }
     }
 
     private fun getLayoutType(): Int {
@@ -87,61 +150,16 @@ class ProgressBarOverlayService : Service() {
         )
     }
 
-    private fun getViewAsProgressBar(@ColorInt color: Int): View {
-        Log.d("Vishal", "$color")
-        val progressView = View(this)
-        val layoutParams = LinearLayout.LayoutParams(
-            0,
-            PROGRESS_BAR_HEIGHT
-        )
-        progressView.setBackgroundColor(color)
-        progressView.layoutParams = layoutParams
-        return progressView
+    private fun isProgressBarNotification(sbn: StatusBarNotification?): Boolean {
+        if (sbn == null) return false
+        return sbn.notification.extras.get(Notification.EXTRA_PROGRESS_MAX) != null &&
+                sbn.notification.extras.get(Notification.EXTRA_PROGRESS) != null
     }
 
-    //Todo: Refactor doing this animation
-    private fun animateViewWidth(view: View, currProgress: Int, maxProgress: Int) {
-        ValueAnimator.ofInt(view.width, getInterpolatedViewWidth(currProgress, maxProgress)).apply {
-            duration = 1000
-            interpolator = AccelerateDecelerateInterpolator()
-            start()
-        }.addUpdateListener {
-            val layoutParams = view.layoutParams
-            layoutParams.width = it.animatedValue as Int
-            view.layoutParams = layoutParams
-        }
-    }
-
-    //Todo: Ugly name refactor to something better also check if there is an internal method which does this stuff
-    private fun getInterpolatedViewWidth(
-        currProgress: Int,
-        maxProgress: Int
-    ): Int {
-        val progressPercent = (currProgress / 100F) * maxProgress
-        return ((progressPercent / 100F) * getScreenWidth()).toInt()
-    }
-
-    fun onNotificationPosted(
-        progressPair: Pair<Int, Int>,
-        notificationId: Int,
-        packageName: String
-    ) {
-        if (progressBarMap[notificationId]?.get() == null) {
-            progressBarMap[notificationId] =
-                WeakReference(addProgressBarView())
-        }
-        animateViewWidth(
-            progressBarMap[notificationId]?.get()!!,
-            progressPair.first,
-            progressPair.second
-        )
-    }
-
-    fun onNotificationRemoved(notificationId: Int) {
-        if (progressBarMap[notificationId]?.get() != null) {
-            removeProgressBarView(progressBarMap[notificationId]?.get())
-            progressBarMap.remove(notificationId)
-        }
+    private fun getProgressStatus(notification: Notification): Pair<Int, Int> {
+        val maxProgress: Int? = notification.extras?.getInt(Notification.EXTRA_PROGRESS_MAX)
+        val currentProgress: Int? = notification.extras?.getInt(Notification.EXTRA_PROGRESS)
+        return Pair(currentProgress ?: 0, maxProgress ?: 0)
     }
 
     @ColorInt

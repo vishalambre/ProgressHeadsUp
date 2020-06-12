@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Progress HeadsUp</string>
+    <string name="about">About</string>
+    <string name="permissions">Permissions</string>
+    <string name="grant_notification_permission">Grant Notification Permission</string>
+    <string name="grant_overlay_permission">Grant Overlay Permission</string>
 </resources>
