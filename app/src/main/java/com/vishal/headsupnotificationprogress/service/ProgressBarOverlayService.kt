@@ -19,17 +19,23 @@ import android.widget.LinearLayout
 import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
 import com.vishal.headsupnotificationprogress.R
+import com.vishal.headsupnotificationprogress.prefserver.PrefServer
 import com.vishal.headsupnotificationprogress.utils.getScreenWidth
+import org.koin.android.ext.android.inject
 import java.lang.ref.WeakReference
 
 class ProgressBarOverlayService : Service() {
-    companion object {
-        const val PROGRESS_BAR_HEIGHT = 2
-    }
 
+    private val progressBarHeightPref: PrefServer<Int> by inject()
+    var progressBarHeight = progressBarHeightPref.get()
     private lateinit var rootLinearLayout: LinearLayout
     private val progressBarMap by lazy { hashMapOf<Int, WeakReference<View>>() }
     private val probableColorTypeList by lazy { listOf("colorPrimary", "colorAccent", "primary") }
+    private val onProgressBarHeightChangedListener = object : PrefServer.PrefChangeListener<Int> {
+        override fun onPrefChanged(newPrefValue: Int) {
+            progressBarHeight = newPrefValue
+        }
+    }
 
     override fun onBind(intent: Intent?): IBinder? {
         return OverlayServiceBinder()
@@ -37,11 +43,13 @@ class ProgressBarOverlayService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        progressBarHeightPref.addPrefChangeListener(onProgressBarHeightChangedListener)
         rootLinearLayout = addRootView()
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        progressBarHeightPref.removePrefChangeListener(onProgressBarHeightChangedListener)
         removeRootView()
     }
 
@@ -95,6 +103,8 @@ class ProgressBarOverlayService : Service() {
     }
 
     private fun removeProgressBarView(view: View?) {
+        // The view shows itself even after it is removed when a new view is added; a temporary workaround for now
+        view?.visibility = View.GONE
         rootLinearLayout.removeView(view)
     }
 
@@ -102,7 +112,7 @@ class ProgressBarOverlayService : Service() {
         val progressView = View(this)
         val layoutParams = LinearLayout.LayoutParams(
             0,
-            PROGRESS_BAR_HEIGHT
+            progressBarHeight
         )
         progressView.setBackgroundColor(color)
         progressView.layoutParams = layoutParams

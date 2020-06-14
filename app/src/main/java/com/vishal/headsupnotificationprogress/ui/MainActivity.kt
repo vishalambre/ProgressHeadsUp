@@ -1,4 +1,4 @@
-package com.vishal.headsupnotificationprogress
+package com.vishal.headsupnotificationprogress.ui
 
 import android.app.AlertDialog
 import android.app.NotificationChannel
@@ -12,14 +12,20 @@ import android.os.Handler
 import android.provider.Settings
 import android.view.MenuItem
 import android.view.View
+import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.vishal.headsupnotificationprogress.BuildConfig
+import com.vishal.headsupnotificationprogress.R
+import com.vishal.headsupnotificationprogress.prefserver.PrefServer
 import com.vishal.headsupnotificationprogress.utils.showToast
 import kotlinx.android.synthetic.main.section_permission.*
+import kotlinx.android.synthetic.main.section_progress_bar_height.*
 import kotlinx.android.synthetic.main.section_test_notification.*
 import kotlinx.android.synthetic.main.toolbar_main.*
+import org.koin.android.ext.android.inject
 
 class MainActivity : AppCompatActivity() {
     companion object {
@@ -30,6 +36,7 @@ class MainActivity : AppCompatActivity() {
         const val PROGRESS_BAR_UPDATE_DELAY_SECONDS = 1000L
     }
 
+    private val progressBarHeightPref: PrefServer<Int> by inject()
     private var currentProgress = 0
     private val handler = Handler()
     private val runnable = object : Runnable {
@@ -49,8 +56,19 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        initViews()
         initToolbar()
         initListeners()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        progressBarHeightPref.removePrefChangeListener(handlePbHeightPrefChanged)
+    }
+
+    private fun initViews() {
+        tv_progress_bar_height.text = getFormattedProgressHeight(progressBarHeightPref.get())
+        sb_progress_bar_height.progress = progressBarHeightPref.get()
     }
 
     private fun initToolbar() = tl_main.run {
@@ -62,6 +80,8 @@ class MainActivity : AppCompatActivity() {
         ll_permission_notification.setOnClickListener(handleNotificationPermission)
         ll_permission_overlay.setOnClickListener(handleOverlayPermission)
         ll_trigger_test_notification.setOnClickListener(triggerTestNotification)
+        progressBarHeightPref.addPrefChangeListener(handlePbHeightPrefChanged)
+        sb_progress_bar_height.setOnSeekBarChangeListener(handleProgressBarHeightChanged)
     }
 
     private fun handleMenuItemClick(item: MenuItem) = when (item.itemId) {
@@ -90,6 +110,15 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val handleProgressBarHeightChanged = object : SeekBar.OnSeekBarChangeListener {
+        override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+            progressBarHeightPref.put(progress)
+        }
+
+        override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+        override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+    }
+
     private val handleOverlayPermission = { _: View ->
         when (Settings.canDrawOverlays(this)) {
             true -> showToast("Permission already granted")
@@ -113,6 +142,14 @@ class MainActivity : AppCompatActivity() {
         }
         Unit
     }
+
+    private val handlePbHeightPrefChanged = object : PrefServer.PrefChangeListener<Int> {
+        override fun onPrefChanged(newPrefValue: Int) {
+            tv_progress_bar_height.text = getFormattedProgressHeight(newPrefValue)
+        }
+    }
+
+    private fun getFormattedProgressHeight(height: Int) = "${height}px"
 
     private fun areAllPermissionsGranted() =
         NotificationManagerCompat.getEnabledListenerPackages(this)

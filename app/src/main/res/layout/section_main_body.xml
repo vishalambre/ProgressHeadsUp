@@ -3,7 +3,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <include layout="@layout/section_permission" />
+    <include
+        android:id="@+id/section_permission"
+        layout="@layout/section_permission" />
+
+    <include
+        layout="@layout/section_customization"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/section_permission" />
 
     <include layout="@layout/section_test_notification" />
 </RelativeLayout>
