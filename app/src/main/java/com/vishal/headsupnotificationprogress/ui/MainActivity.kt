@@ -191,15 +191,13 @@ class MainActivity : AppCompatActivity() {
 
 /* Todo:
    Feature:
- - Centered Progress bar Feature
- - Fix using primary color by default logic
  - Alert Dialog message TextSize
  - Animate progressbar removal
  - Ability to Set Custom color from color picker
  - Blacklist Apps
  - Make centered progress bar
  - Handling indeterminate progressbar
-
+ - Centered Progress bar Feature
  Chore:
  - CleanUp and Refactoring ;)
 */

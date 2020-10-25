@@ -4,8 +4,6 @@ import android.animation.ValueAnimator
 import android.app.Notification
 import android.app.Service
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.content.res.Resources
 import android.graphics.PixelFormat
 import android.os.Binder
 import android.os.Build
@@ -17,7 +15,6 @@ import android.view.WindowManager
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.LinearLayout
 import androidx.annotation.ColorInt
-import androidx.core.content.ContextCompat
 import com.vishal.headsupnotificationprogress.R
 import com.vishal.headsupnotificationprogress.prefserver.PrefServer
 import com.vishal.headsupnotificationprogress.utils.getScreenWidth
@@ -29,8 +26,7 @@ class ProgressBarOverlayService : Service() {
     private val progressBarHeightPref: PrefServer<Int> by inject()
     var progressBarHeight = progressBarHeightPref.get()
     private lateinit var rootLinearLayout: LinearLayout
-    private val progressBarMap by lazy { hashMapOf<Int, WeakReference<View>>() }
-    private val probableColorTypeList by lazy { listOf("colorPrimary", "colorAccent", "primary") }
+    private val progressBarMap = hashMapOf<Int, WeakReference<View>>()
     private val onProgressBarHeightChangedListener = object : PrefServer.PrefChangeListener<Int> {
         override fun onPrefChanged(newPrefValue: Int) {
             progressBarHeight = newPrefValue
@@ -48,9 +44,9 @@ class ProgressBarOverlayService : Service() {
     }
 
     override fun onDestroy() {
-        super.onDestroy()
         progressBarHeightPref.removePrefChangeListener(onProgressBarHeightChangedListener)
         removeRootView()
+        super.onDestroy()
     }
 
     fun onNotificationPosted(sbn: StatusBarNotification) {
@@ -63,17 +59,17 @@ class ProgressBarOverlayService : Service() {
         with(sbn.notification?.run { getProgressStatus(this) }) {
             this?.also {
                 if (it.second == 0) removeProgressBarOverlay(sbn.id)
-                else addProgressBar(it, sbn.id, sbn.packageName)
+                else addProgressBar(it, sbn.id, sbn.notification.color)
             }
         }
 
     private fun addProgressBar(
         progressPair: Pair<Int, Int>,
         notificationId: Int,
-        packageName: String
+        @ColorInt color: Int
     ) {
         if (progressBarMap[notificationId]?.get() == null) {
-            progressBarMap[notificationId] = WeakReference(addProgressBarView())
+            progressBarMap[notificationId] = WeakReference(addProgressBarView(color))
         }
         animateViewWidth(
             progressBarMap[notificationId]?.get()!!,
@@ -96,16 +92,20 @@ class ProgressBarOverlayService : Service() {
         windowManager?.removeView(rootLinearLayout)
     }
 
-    private fun addProgressBarView(@ColorInt progressBarColor: Int = getColor(R.color.colorWhite)): View {
-        val view = getViewAsProgressBar(progressBarColor)
+    private fun addProgressBarView(@ColorInt progressBarColor: Int?): View {
+        val finalColor = if (progressBarColor == null || progressBarColor == 0)
+            getColor(R.color.colorWhite)
+        else progressBarColor
+
+        val view = getViewAsProgressBar(finalColor)
         rootLinearLayout.addView(view)
         return view
     }
 
     private fun removeProgressBarView(view: View?) {
         // The view shows itself even after it is removed when a new view is added; a temporary workaround for now
-        view?.visibility = View.GONE
-        rootLinearLayout.removeView(view)
+        view?.visibility = View.INVISIBLE
+        rootLinearLayout.post { rootLinearLayout.removeView(view) }
     }
 
     private fun getViewAsProgressBar(@ColorInt color: Int): View {
@@ -170,30 +170,6 @@ class ProgressBarOverlayService : Service() {
         val maxProgress: Int? = notification.extras?.getInt(Notification.EXTRA_PROGRESS_MAX)
         val currentProgress: Int? = notification.extras?.getInt(Notification.EXTRA_PROGRESS)
         return Pair(currentProgress ?: 0, maxProgress ?: 0)
-    }
-
-    @ColorInt
-    private fun getProgressBarColor(appPackageName: String): Int {
-        return try {
-            val appResources = packageManager.getResourcesForApplication(appPackageName)
-            getColorFrom(appResources, appPackageName) ?: ContextCompat.getColor(
-                this,
-                R.color.colorWhite
-            )
-        } catch (e: PackageManager.NameNotFoundException) {
-            ContextCompat.getColor(this, R.color.colorWhite)
-        }
-    }
-
-    @ColorInt
-    private fun getColorFrom(appResources: Resources, appPackageName: String): Int? {
-        return try {
-            with(appResources.getIdentifier("colorPrimary", "color", appPackageName)) {
-                appResources.getColor(this)
-            }
-        } catch (e: Resources.NotFoundException) {
-            null
-        }
     }
 
     inner class OverlayServiceBinder : Binder() {

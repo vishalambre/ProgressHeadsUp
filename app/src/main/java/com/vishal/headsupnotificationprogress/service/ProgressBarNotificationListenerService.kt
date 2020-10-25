@@ -11,10 +11,6 @@ import android.service.notification.StatusBarNotification
 
 class ProgressBarNotificationListenerService : NotificationListenerService() {
 
-    companion object {
-        val TAG = ProgressBarNotificationListenerService::class.simpleName
-    }
-
     var progressBarOverlayService: ProgressBarOverlayService? =
         null //Will be initialized once the service is connected
 

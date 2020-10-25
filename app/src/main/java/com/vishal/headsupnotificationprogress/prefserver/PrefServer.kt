@@ -10,6 +10,7 @@ import android.content.SharedPreferences
  */
 // Todo: Refactor entire class
 // Todo: Handle for all types, make this generic, unsafe cast
+//Todo: Use PreferenceX instead
 class PrefServer<T> private constructor(
     fileName: String,
     private val key: String,
