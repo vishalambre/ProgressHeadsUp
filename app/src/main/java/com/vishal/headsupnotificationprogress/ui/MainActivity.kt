@@ -20,6 +20,7 @@ import androidx.core.app.NotificationManagerCompat
 import com.vishal.headsupnotificationprogress.BuildConfig
 import com.vishal.headsupnotificationprogress.R
 import com.vishal.headsupnotificationprogress.prefserver.PrefServer
+import com.vishal.headsupnotificationprogress.utils.navigateToPlayStore
 import com.vishal.headsupnotificationprogress.utils.showToast
 import kotlinx.android.synthetic.main.section_permission.*
 import kotlinx.android.synthetic.main.section_progress_bar_height.*
@@ -28,13 +29,6 @@ import kotlinx.android.synthetic.main.toolbar_main.*
 import org.koin.android.ext.android.inject
 
 class MainActivity : AppCompatActivity() {
-    companion object {
-        const val CHANNEL_NAME = "Test Notification"
-        const val CHANNEL_DESCRIPTION = "Channel for test notification"
-        const val NOTIFICATION_ID = 1
-        const val MAX_PROGRESS = 100
-        const val PROGRESS_BAR_UPDATE_DELAY_SECONDS = 1000L
-    }
 
     private val progressBarHeightPref: PrefServer<Int> by inject()
     private var currentProgress = 0
@@ -87,6 +81,10 @@ class MainActivity : AppCompatActivity() {
     private fun handleMenuItemClick(item: MenuItem) = when (item.itemId) {
         R.id.about -> {
             showAboutDialog()
+            true
+        }
+        R.id.rate_app -> {
+            navigateToPlayStore()
             true
         }
         else -> false
@@ -185,6 +183,14 @@ class MainActivity : AppCompatActivity() {
         with(NotificationManagerCompat.from(this)) {
             cancel(NOTIFICATION_ID)
         }
+    }
+
+    companion object {
+        const val CHANNEL_NAME = "Test Notification"
+        const val CHANNEL_DESCRIPTION = "Channel for test notification"
+        const val NOTIFICATION_ID = 1
+        const val MAX_PROGRESS = 100
+        const val PROGRESS_BAR_UPDATE_DELAY_SECONDS = 1000L
     }
 }
 
