@@ -1,0 +1,11 @@
+ext.versions = [
+        kotlin: '1.4.32',
+        koin  : '2.1.6',
+        app_compat: '1.3.1',
+]
+
+ext.libraries = [
+        kotlin_std_lib: "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${versions.kotlin}",
+        koin: "org.koin:koin-android:${versions.koin}",
+        app_compat: "androidx.appcompat:appcompat:${versions.app_compat}",
+]

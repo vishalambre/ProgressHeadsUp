@@ -21,7 +21,7 @@ class PrefServer<T> private constructor(
     private val prefChangeListenerSet = HashSet<PrefChangeListener<T>>()
     private val sharedPreferences: SharedPreferences =
         context.getSharedPreferences(fileName, Context.MODE_PRIVATE)
-    private var prefValue: T = sharedPreferences.getInt(key,default) as T //Todo unsafe cast
+    private var prefValue: T = sharedPreferences.getInt(key, default) as T //Todo unsafe cast
 
     @Synchronized
     fun get() = prefValue
@@ -49,7 +49,7 @@ class PrefServer<T> private constructor(
     }
 
     companion object {
-        fun <T> from(fileName: String, key: String, context: Context, default:Int) =
+        fun <T> from(fileName: String, key: String, context: Context, default: Int) =
             PrefServer<T>(fileName, key, context, default)
     }
 
