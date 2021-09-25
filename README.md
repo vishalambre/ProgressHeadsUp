@@ -1,2 +1,2 @@
 # ProgressHeadsUp
-A small subtle progress bar underneath the status bar showing the progress bar of notifications
+A small subtle overlay progress bar underneath the status bar that mimics the notification progress bar
