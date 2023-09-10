@@ -8,10 +8,13 @@
         layout="@layout/section_permission" />
 
     <include
+        android:id="@+id/section_customization"
         layout="@layout/section_customization"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/section_permission" />
 
-    <include layout="@layout/section_test_notification" />
+    <include
+        android:id="@+id/trigger_test_notification"
+        layout="@layout/section_test_notification" />
 </RelativeLayout>

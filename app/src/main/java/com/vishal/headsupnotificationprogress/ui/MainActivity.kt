@@ -1,10 +1,12 @@
 package com.vishal.headsupnotificationprogress.ui
 
+import android.Manifest
 import android.app.AlertDialog
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -15,20 +17,34 @@ import android.view.View
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.vishal.headsupnotificationprogress.BuildConfig
 import com.vishal.headsupnotificationprogress.R
+import com.vishal.headsupnotificationprogress.databinding.ActivityMainBinding
 import com.vishal.headsupnotificationprogress.prefserver.PrefServer
 import com.vishal.headsupnotificationprogress.utils.navigateToPlayStore
 import com.vishal.headsupnotificationprogress.utils.showToast
-import kotlinx.android.synthetic.main.section_permission.*
-import kotlinx.android.synthetic.main.section_progress_bar_height.*
-import kotlinx.android.synthetic.main.section_test_notification.*
-import kotlinx.android.synthetic.main.toolbar_main.*
 import org.koin.android.ext.android.inject
 
 class MainActivity : AppCompatActivity() {
+
+    private lateinit var binding: ActivityMainBinding
+
+    private val toolbarBinding
+        get() = binding.toolbar
+    private val permissionsBinding
+        get() = binding.sectionMainBody.sectionPermission
+
+    private val customizeHeightBinding
+        get() = binding.sectionMainBody.sectionCustomization.sectionCustomizeHeight
+
+    private val heightChangeSeekBar
+        get() = binding.sectionMainBody.sectionCustomization.sectionCustomizeHeight.sbProgressBarHeight
+
+    private val triggerTestNotificationBtn
+        get() = binding.sectionMainBody.triggerTestNotification.llTriggerTestNotification
 
     private val progressBarHeightPref: PrefServer<Int> by inject()
     private var currentProgress = 0
@@ -49,7 +65,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
         initViews()
         initToolbar()
         initListeners()
@@ -60,22 +77,29 @@ class MainActivity : AppCompatActivity() {
         progressBarHeightPref.removePrefChangeListener(handlePbHeightPrefChanged)
     }
 
-    private fun initViews() {
-        tv_progress_bar_height.text = getFormattedProgressHeight(progressBarHeightPref.get())
-        sb_progress_bar_height.progress = progressBarHeightPref.get()
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == NOTIFICATION_PERMISSION_REQUEST_CODE && resultCode == RESULT_OK) {
+            showNotification()
+        }
     }
 
-    private fun initToolbar() = tl_main.run {
+    private fun initViews() {
+        customizeHeightBinding.tvProgressBarHeight.text = getFormattedProgressHeight(progressBarHeightPref.get())
+        customizeHeightBinding.sbProgressBarHeight.progress = progressBarHeightPref.get()
+    }
+
+    private fun initToolbar() = toolbarBinding.tlMain.run {
         inflateMenu(R.menu.main)
         setOnMenuItemClickListener(::handleMenuItemClick)
     }
 
     private fun initListeners() {
-        ll_permission_notification.setOnClickListener(handleNotificationPermission)
-        ll_permission_overlay.setOnClickListener(handleOverlayPermission)
-        ll_trigger_test_notification.setOnClickListener(triggerTestNotification)
+        permissionsBinding.llPermissionNotification.setOnClickListener(handleNotificationPermission)
+        permissionsBinding.llPermissionOverlay.setOnClickListener(handleOverlayPermission)
+        triggerTestNotificationBtn.setOnClickListener(triggerTestNotification)
         progressBarHeightPref.addPrefChangeListener(handlePbHeightPrefChanged)
-        sb_progress_bar_height.setOnSeekBarChangeListener(handleProgressBarHeightChanged)
+        heightChangeSeekBar.setOnSeekBarChangeListener(handleProgressBarHeightChanged)
     }
 
     private fun handleMenuItemClick(item: MenuItem) = when (item.itemId) {
@@ -97,7 +121,7 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton("Dismiss", null)
             .show()
 
-        //Todo: refactor
+        // Todo: refactor
         dialog.findViewById<TextView>(android.R.id.message)?.textSize = 14F
     }
 
@@ -123,8 +147,8 @@ class MainActivity : AppCompatActivity() {
             else -> startActivity(
                 Intent(
                     Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package:$packageName")
-                )
+                    Uri.parse("package:$packageName"),
+                ),
             )
         }
     }
@@ -136,14 +160,14 @@ class MainActivity : AppCompatActivity() {
                 showNotification(currentProgress)
                 handler.postDelayed(runnable, PROGRESS_BAR_UPDATE_DELAY_SECONDS)
             }
-            false -> showToast("Some permission is missing!")
+            false -> showToast("Please allow all permissions!")
         }
         Unit
     }
 
     private val handlePbHeightPrefChanged = object : PrefServer.PrefChangeListener<Int> {
         override fun onPrefChanged(newPrefValue: Int) {
-            tv_progress_bar_height.text = getFormattedProgressHeight(newPrefValue)
+            customizeHeightBinding.tvProgressBarHeight.text = getFormattedProgressHeight(newPrefValue)
         }
     }
 
@@ -168,6 +192,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showNotification(progress: Int = 0) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), NOTIFICATION_PERMISSION_REQUEST_CODE)
+            }
+        }
+
         val notification = NotificationCompat.Builder(this, CHANNEL_NAME)
             .setSmallIcon(android.R.drawable.ic_popup_reminder)
             .setContentTitle("Test Notification!")
@@ -186,14 +216,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
-        const val CHANNEL_NAME = "Test Notification"
-        const val CHANNEL_DESCRIPTION = "Channel for test notification"
-        const val NOTIFICATION_ID = 1
-        const val MAX_PROGRESS = 100
-        const val PROGRESS_BAR_UPDATE_DELAY_SECONDS = 1000L
+        private const val CHANNEL_NAME = "Test Notification"
+        private const val CHANNEL_DESCRIPTION = "Channel for test notification"
+        private const val NOTIFICATION_ID = 1
+        private const val MAX_PROGRESS = 100
+        private const val PROGRESS_BAR_UPDATE_DELAY_SECONDS = 1000L
+        private const val NOTIFICATION_PERMISSION_REQUEST_CODE = 1001
     }
 }
-
 
 /* Todo:
    Feature:

@@ -8,5 +8,7 @@
         style="@style/HeaderTextStyle"
         android:text="@string/customizations" />
 
-    <include layout="@layout/section_progress_bar_height" />
+    <include
+        android:id="@+id/section_customize_height"
+        layout="@layout/section_progress_bar_height" />
 </LinearLayout>

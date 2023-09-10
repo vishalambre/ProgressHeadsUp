@@ -6,7 +6,11 @@
     android:orientation="vertical"
     android:padding="@dimen/screen_content_padding">
 
-    <include layout="@layout/toolbar_main" />
+    <include
+        android:id="@+id/toolbar"
+        layout="@layout/toolbar_main" />
 
-    <include layout="@layout/section_main_body" />
+    <include
+        android:id="@+id/section_main_body"
+        layout="@layout/section_main_body" />
 </LinearLayout>
